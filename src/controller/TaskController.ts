@@ -1,13 +1,33 @@
 import { Request, Response } from 'express';
 import { Task } from '../model/Task';
+import * as yup from 'yup';
 
 class TaskController {
   async create (request: Request, response: Response) {
     const { username, activity } = request.body;
 
+    const schema = yup.object().shape({
+      username: yup.string().required(),
+      activity: yup.array().min(1).required()
+    });
+
+    try {
+      await schema.validate(request.body, { abortEarly: false });
+    } catch (err) {
+      return response.status(400).json(err);
+    }
+
+    const usernameAlreadyExists = await Task.findOne({
+      username
+    });
+
+    if (usernameAlreadyExists) {
+      return response.status(400).json('User already exists!');
+    }
+
     const task = await Task.create(request.body);
 
-    return response.json(task);
+    return response.status(201).json(task);
   }
 
   async findByUsername (request: Request, response: Response) {
