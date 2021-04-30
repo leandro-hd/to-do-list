@@ -25,9 +25,9 @@ class TaskController {
       return response.status(400).json('User already exists!');
     }
 
-    const task = await Task.create(request.body);
+    await Task.create(request.body);
 
-    return response.status(201).json(task);
+    return response.status(201).json(request.body);
   }
 
   async findByUsername (request: Request, response: Response) {
@@ -35,22 +35,42 @@ class TaskController {
 
     const task = await Task.findOne({ username: username }).select('activity -_id');
 
+    if (!task) {
+      return response.status(400).json('User not exists!');
+    }
+
     const activity = task.activity;
 
-    return response.json(activity);
+    return response.status(200).json(activity);
   }
 
   async replaceActivity (request: Request, response: Response) {
     const { username, activity_name } = request.params;
     const { activity } = request.body;
 
+    const schema = yup.object().shape({
+      activity: yup.string().required()
+    });
+
+    try {
+      await schema.validate(request.body, { abortEarly: false });
+    } catch (err) {
+      return response.status(400).json(err);
+    }
+
     const task = await Task.findOne({ username: username }).select('activity -_id');
+
+    if (!task) {
+      return response.status(400).json('User not exists!');
+    }
 
     for (let item in task.activity) {
       if (task.activity[item].toLowerCase() === activity_name) {
+        const task_replaced = task.activity[item];
+
         task.activity[item] = activity;
-        
-        const task_replaced = await Task.findOneAndUpdate(
+
+        await Task.findOneAndUpdate(
           {
             username: username
           },
@@ -62,16 +82,32 @@ class TaskController {
           }
         );
 
-        return response.json(task_replaced);
+        return response.status(200).json(task_replaced + ' replaced by ' + activity);
       }
     }
+
+    return response.status(400).json('Activity not found!');
   }
 
   async updateActivity (request: Request, response: Response) {
     const { username } = request.params;
     const { activity } = request.body;
 
+    const schema = yup.object().shape({
+      activity: yup.string().required()
+    });
+
+    try {
+      await schema.validate(request.body, { abortEarly: false });
+    } catch (err) {
+      return response.status(400).json(err);
+    }
+
     const task = await Task.findOne({ username: username }).select('activity -_id');
+
+    if (!task) {
+      return response.status(400).json('User not exists!');
+    }
 
     const task_updated = [];
 
@@ -91,19 +127,25 @@ class TaskController {
       }
     );
 
-    return response.json(task_update);
+    return response.status(200).json(task_update.activity);
   }
 
-  async deleteOneActivity (request: Request, response: Response) {
+  async removeActivity (request: Request, response: Response) {
     const { username, activity_name } = request.params;
 
     const task = await Task.findOne({ username: username }).select('activity -_id');
 
+    if (!task) {
+      return response.status(400).json('User not exists!');
+    }
+
     for (let item in task.activity) {
       if (task.activity[item].toLowerCase() === activity_name) {
+        const task_deleted = task.activity[item];
+
         task.activity.splice(item, 1);
-        
-        const task_delete = await Task.findOneAndUpdate(
+
+        await Task.findOneAndUpdate(
           {
             username: username
           },
@@ -115,13 +157,23 @@ class TaskController {
           }
         );
 
-        return response.json(task_delete);
+        return response.status(200).json(task_deleted + ' deleted!');
       }
     }
+
+    return response.status(400).json('Activity not found!');
   }
 
   async deleteActivity (request: Request, response: Response) {
     const { username } = request.params;
+
+    const usernameAlreadyExists = await Task.findOne({
+      username
+    });
+
+    if (!usernameAlreadyExists) {
+      return response.status(400).json('User not exists!');
+    }
 
     await Task.findOneAndUpdate(
       {
@@ -135,7 +187,7 @@ class TaskController {
       }
     );
 
-    return response.json('Ok');
+    return response.status(200).json([]);
   }
 }
 
