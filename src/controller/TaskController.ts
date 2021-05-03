@@ -6,6 +6,16 @@ class TaskController {
   async create (request: Request, response: Response) {
     const { username, activity } = request.body;
 
+    let activity_validation = JSON.stringify(activity);
+
+    let formatted_activity = activity_validation.substring(2, (activity_validation.length - 2)).trim();
+
+    let formatted_username = username.substring(1, (username.length - 1)).trim();
+
+    if (!formatted_activity.length || !formatted_username) {
+      return response.status(400).json('Username or activity is empty!');
+    }
+
     const schema = yup.object().shape({
       username: yup.string().required(),
       activity: yup.array().min(1).required()
@@ -92,6 +102,16 @@ class TaskController {
   async updateActivity (request: Request, response: Response) {
     const { username } = request.params;
     const { activity } = request.body;
+
+    let activity_validation = JSON.stringify(activity);
+
+    let formatted_activity = activity_validation.substring(1, (activity_validation.length - 1)).trim();
+
+    let formatted_username = username.substring(1, (username.length - 1)).trim();
+
+    if (!formatted_activity.length || !formatted_username.length) {
+      return response.status(400).json('Username or activity is empty!');
+    }
 
     const schema = yup.object().shape({
       activity: yup.string().required()
