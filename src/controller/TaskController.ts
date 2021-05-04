@@ -6,13 +6,15 @@ class TaskController {
   async create (request: Request, response: Response) {
     const { username, activity } = request.body;
 
+    let formatted_username = username.trim();
+
     let activity_validation = JSON.stringify(activity);
+
+    let original_activity = activity_validation.substring(2, (activity_validation.length - 2));
 
     let formatted_activity = activity_validation.substring(2, (activity_validation.length - 2)).trim();
 
-    let formatted_username = username.substring(1, (username.length - 1)).trim();
-
-    if (!formatted_activity.length || !formatted_username) {
+    if ((username !== formatted_username) || (original_activity !== formatted_activity)) {
       return response.status(400).json('Username or activity is empty!');
     }
 
