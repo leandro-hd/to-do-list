@@ -1,6 +1,6 @@
-import mongoose, { mongo } from 'mongoose';
+import mongoose from 'mongoose';
 
-mongoose.connect(`${process.env.MONGODB_URL}`, {
+mongoose.connect(`mongodb://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:27017/admin`, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 });

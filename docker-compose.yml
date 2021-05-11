@@ -1,25 +1,30 @@
-version: '3'
-
+version: "3.2"
 services:
-  server:
-    container_name: NODEJS_SERVER_MEDIUM
-    build: '.'
-    volumes:
-      - ./:/node-app
-      - ./node_modules:/node-app/node_modules
+  db:
+    image: mongo:4.2
+    container_name: db
+    restart: always
+    ports:
+      - 27017:27017
     environment:
-      NODE_ENV: development
+      MONGO_INITDB_DATABASE: ${DB_NAME}
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD}
+
+  server:
+    image: node:latest
+    container_name: server
+    restart: always
     depends_on:
       - db
-    links:
-      - db
     ports:
-      - '9000:9000'
-
-  db:
-    image: 'mongo'
-    container_name: MONGODB_MEDIUM
-    ports:
-      - '27017:27017'
+      - 8080:3333
     volumes:
-      - ./data/db:/data/db
+      - .:/usr/src/app
+    working_dir: /usr/src/app
+    command: yarn dev
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
